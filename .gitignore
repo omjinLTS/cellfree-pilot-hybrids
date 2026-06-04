@@ -1,0 +1,33 @@
+# Python caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments and local env files
+.venv/
+venv/
+env/
+.env
+.env.*
+
+# Local editor / assistant state
+.vscode/
+.claude/
+
+# Experiment logs and stale process markers
+logs/*.log
+logs/*.pid
+logs/*.pids
+logs/*.done
+
+# Large local archive generated during cleanup
+.artifact_archive/
+
+# Paper PDFs are local references, not repository assets
+*.pdf
+
+# OS noise
+.DS_Store
+Thumbs.db
