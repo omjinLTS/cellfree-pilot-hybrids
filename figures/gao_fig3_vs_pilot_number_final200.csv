@@ -1,0 +1,76 @@
+tau_p,scheme,power_control,throughput_95_likely_bps
+10,Upper bound,Fractional power,6946790.649324198
+10,Gao matching,Fractional power,4968528.558868456
+10,Structured access,Fractional power,4658750.072836054
+10,Graph coloring,Fractional power,4875156.27480399
+10,Random,Fractional power,4446157.959039331
+15,Upper bound,Fractional power,6881349.128233636
+15,Gao matching,Fractional power,5455968.960096773
+15,Structured access,Fractional power,5524798.73185908
+15,Graph coloring,Fractional power,5400938.7598916525
+15,Random,Fractional power,4963793.019034211
+20,Upper bound,Fractional power,6718086.050425067
+20,Gao matching,Fractional power,5611438.623356251
+20,Structured access,Fractional power,5794867.64179098
+20,Graph coloring,Fractional power,5622483.826898867
+20,Random,Fractional power,5177317.598475761
+25,Upper bound,Fractional power,6491595.448235538
+25,Gao matching,Fractional power,5577985.1208204245
+25,Structured access,Fractional power,5832508.470299388
+25,Graph coloring,Fractional power,5573007.3863842115
+25,Random,Fractional power,5235585.526775794
+30,Upper bound,Fractional power,6323656.707410632
+30,Gao matching,Fractional power,5597842.74090412
+30,Structured access,Fractional power,5851985.713751981
+30,Graph coloring,Fractional power,5883889.792330773
+30,Random,Fractional power,5267107.394548234
+10,Upper bound,Full power,3526743.1585003785
+10,Gao matching,Full power,2462759.6538862674
+10,Structured access,Full power,2365324.788127029
+10,Graph coloring,Full power,2429202.0496051526
+10,Random,Full power,2208844.9164875587
+15,Upper bound,Full power,3467112.8914574343
+15,Gao matching,Full power,2641306.909218331
+15,Structured access,Full power,2682452.111604123
+15,Graph coloring,Full power,2645996.425916935
+15,Random,Full power,2452452.3610207057
+20,Upper bound,Full power,3307489.6477924767
+20,Gao matching,Full power,2714844.5159958433
+20,Structured access,Full power,2815043.215678167
+20,Graph coloring,Full power,2694927.867493834
+20,Random,Full power,2543611.964745388
+25,Upper bound,Full power,3217194.6613278566
+25,Gao matching,Full power,2706985.3367154608
+25,Structured access,Full power,2820764.891422391
+25,Graph coloring,Full power,2710399.984188736
+25,Random,Full power,2529826.30667396
+30,Upper bound,Full power,3159247.2333934205
+30,Gao matching,Full power,2753392.7876837975
+30,Structured access,Full power,2874244.177154889
+30,Graph coloring,Full power,2896403.71084128
+30,Random,Full power,2610071.6892759395
+10,Upper bound,Max-min power,5521106.013223454
+10,Gao matching,Max-min power,3959122.5847437037
+10,Structured access,Max-min power,4792487.124617788
+10,Graph coloring,Max-min power,4772553.3661499815
+10,Random,Max-min power,3253518.2672105804
+15,Upper bound,Max-min power,5266509.13359363
+15,Gao matching,Max-min power,4584188.797497582
+15,Structured access,Max-min power,4922756.268760961
+15,Graph coloring,Max-min power,4808889.833338205
+15,Random,Max-min power,3985603.9314009333
+20,Upper bound,Max-min power,5571235.912917706
+20,Gao matching,Max-min power,4833236.2637799345
+20,Structured access,Max-min power,5319872.834373933
+20,Graph coloring,Max-min power,5200003.425728676
+20,Random,Max-min power,4771751.366659859
+25,Upper bound,Max-min power,5226056.070187093
+25,Gao matching,Max-min power,4628600.27292188
+25,Structured access,Max-min power,5014742.862798742
+25,Graph coloring,Max-min power,4916433.773363038
+25,Random,Max-min power,3996960.3804764366
+30,Upper bound,Max-min power,5215141.028029664
+30,Gao matching,Max-min power,4733965.586130993
+30,Structured access,Max-min power,5034918.665048066
+30,Graph coloring,Max-min power,4996563.594207098
+30,Random,Max-min power,4320930.572204325
