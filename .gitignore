@@ -35,6 +35,25 @@ figures/sweep_taup_raw_*.csv
 # Paper PDFs are local references, not repository assets
 *.pdf
 
+# LaTeX compile artifacts
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.lof
+*.log
+*.lot
+*.nav
+*.out
+*.run.xml
+*.snm
+*.synctex.gz
+*.toc
+*.vrb
+*.xdv
+
 # OS noise
 .DS_Store
 Thumbs.db
