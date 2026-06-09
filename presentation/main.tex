@@ -13,7 +13,7 @@
 \title{Beam Resource Matching for Pilot Assignment}
 \subtitle{Combining Beam-Domain Conflict Modeling with Many-to-Many Matching}
 \author{Jeonghoo Maeng \and Myoungjin Oh}
-\date{Mobile Communication Systems Team Project}
+\date{Mobile Communication Systems Term Project}
 
 \newcommand{\taup}{\tau_{\mathrm{p}}}
 \newcommand{\tauc}{\tau_{\mathrm{c}}}
@@ -576,29 +576,71 @@
     \]
 \end{frame}
 
-\begin{frame}{Weighted Assignment Chain}
+\begin{frame}{Weighted Pilot Assignment Pipeline}
     \small
     \begin{center}
-        \begin{tikzpicture}[
-                node distance=0.55cm,
-                box/.style={draw, rounded corners, align=center, fill=purple!8, font=\scriptsize, minimum width=2.5cm, minimum height=0.60cm},
-                arr/.style={->, thick, >=Stealth}
-            ]
-            \node[box] (w) {\(\waa,\wai,\wia\)};
-            \node[box, right=0.5cm of w] (W) {\(W_{u,v}\)};
-            \node[box, right=0.5cm of W] (M) {\(M_{u,v}^{B}\)};
-            \node[box, below=0.65cm of M] (S) {\(S_r,\ C(u,p)\)};
-            \node[box, left=0.5cm of S] (p) {\(p_u^{\star}\)};
-            \draw[arr] (w) -- (W);
-            \draw[arr] (W) -- (M);
-            \draw[arr] (M) -- (S);
-            \draw[arr] (S) -- (p);
-        \end{tikzpicture}
+        \resizebox{0.96\linewidth}{!}{%
+            \begin{tikzpicture}[
+                    stage/.style={
+                            draw,
+                            rounded corners=2pt,
+                            align=center,
+                            fill=purple!7,
+                            font=\scriptsize,
+                            minimum width=3.65cm,
+                            minimum height=1.58cm,
+                            inner sep=5pt
+                        },
+                    decision/.style={
+                            draw,
+                            rounded corners=2pt,
+                            align=center,
+                            fill=orange!10,
+                            font=\scriptsize,
+                            minimum width=3.55cm,
+                            minimum height=0.92cm,
+                            inner sep=4pt
+                        },
+                    arr/.style={->, thick, >=Stealth},
+                    lab/.style={font=\tiny, text=black!70, fill=white, inner sep=1pt}
+                ]
+                \node[stage] (weight) {
+                    \textbf{1. Beam-state weighting}\\[0.35em]
+                    \(w_{\mathrm{aa}}, w_{\mathrm{ai}}, w_{\mathrm{ia}}\)\\
+                    active--active \(>\) mixed overlap
+                };
+                \node[stage, right=0.75cm of weight] (score) {
+                    \textbf{2. Directed overlap score}\\[0.25em]
+                    \(W_{u,v}\rightarrow M_{u,v}^{B}\)\\
+                    pairwise contamination severity
+                };
+                \node[stage, right=0.75cm of score] (policy) {
+                    \textbf{3. Assignment policy}\\[0.25em]
+                    rank groups and evaluate\\
+                    pilot reuse penalties
+                };
+
+                \node[decision, below=0.72cm of policy, xshift=-1.78cm] (priority) {
+                    group priority\\[-0.1em]
+                    \(S_r=\sum_{u,v\in\mathcal{G}_r} M_{u,v}^{B}\)
+                };
+                \node[decision, below=0.72cm of policy, xshift=1.78cm] (reuse) {
+                    pilot reuse cost\\[-0.1em]
+                    \(C(u,p)=\sum(M_{u,i}^{B}+M_{i,u}^{B})\)
+                };
+
+                \draw[arr] (weight) -- node[lab, above] {weighted overlap} (score);
+                \draw[arr] (score) -- node[lab, above] {risk metric} (policy);
+                \coordinate (split) at ($(policy.south)+(0,-0.32cm)$);
+                \draw[arr] (policy.south) -- (split) -| (priority.north);
+                \draw[arr] (policy.south) -- (split) -| (reuse.north);
+            \end{tikzpicture}
+        }
     \end{center}
 
-    \vspace{0.6em}
+    \vspace{0.45em}
     \begin{block}{Assignment implication}
-        A single weighted signal \((\waa,\wai,\wia)\) drives both group priority and pilot reuse cost.
+        The same weighted beam-overlap metric is used consistently for conflict scoring, group ordering, and pilot reuse selection.
     \end{block}
 \end{frame}
 
@@ -629,92 +671,66 @@
 % ----------------------------------------------------------------
 % Results
 % ----------------------------------------------------------------
-\section{Evaluation Snapshot}
+\section{Evaluation}
 
-\begin{frame}{Main Result: Moderate User Load}
+\begin{frame}{SE vs. User Load}
     \small
-    \begin{columns}[T,onlytextwidth]
-        \begin{column}{0.58\textwidth}
-            \centering
-            \includegraphics[width=\linewidth,height=0.68\textheight,keepaspectratio]{presentation_6method/presentation_clean_load_crossover_se.png}
-        \end{column}
-        \begin{column}{0.38\textwidth}
-            \footnotesize
-            \textbf{Evaluation configuration}
-            \begin{tightitemize}
-                \item \(L=200,\ N=8,\ K=25{-}50\)
-                \item \(\tauc=150,\ \taudesign=15\)
-                \item 200 setups
-            \end{tightitemize}
+    \vspace{-0.45em}
+    \begin{center}
+        \includegraphics[width=0.96\linewidth]{presentation_6method/presentation_clean_load_crossover_se.png}
+    \end{center}
+    \vspace{-0.75em}
 
-            \vspace{0.25em}
-            \textbf{Observed performance at \(K=50\)}
-            \begin{tightitemize}
-                \item \BRM{}: \(+6.66\%\) mean SE.
-                \item \TopN{}: \(+5.35\%\) mean SE.
-                \item Gao matches Random within noise.
-                \item Mussbah loses from inflated \(\taup\).
-            \end{tightitemize}
-        \end{column}
-    \end{columns}
+    \begin{minipage}{0.96\linewidth}
+        \scriptsize
+        \textbf{Configuration:} \(L=200\), \(N=8\), \(K=25{-}50\), \(\tauc=150\), \(\taudesign=15\), 200 setups.\\[-0.1em]
+        \textbf{Observation at \(K=50\):} \BRM{} \(+6.66\%\) mean SE, \TopN{} \(+5.35\%\); Gao remains close to Random, while Mussbah is penalized by inflated \(\taup\).
+    \end{minipage}
 \end{frame}
 
-\begin{frame}{Actual Pilot Count Explains the Trend}
+\begin{frame}{Pilot Count vs. User Load}
     \small
-    \begin{columns}[T,onlytextwidth]
-        \begin{column}{0.58\textwidth}
-            \centering
-            \includegraphics[width=\linewidth,height=0.68\textheight,keepaspectratio]{presentation_6method/presentation_clean_pilot_count_vs_k.png}
-        \end{column}
-        \begin{column}{0.38\textwidth}
-            \textbf{Pilot-overhead profile}
-            \begin{tightitemize}
-                \item Random and Gao consume the full design budget.
-                \item Mussbah's chromatic number grows steeply with load.
-                \item \BRM{} holds \(\taup\) below the design budget across all load levels.
-            \end{tightitemize}
+    \vspace{-0.45em}
+    \begin{center}
+        \includegraphics[width=0.96\linewidth]{presentation_6method/presentation_clean_pilot_count_vs_k.png}
+    \end{center}
+    \vspace{-0.75em}
 
-            \vspace{0.45em}
-            \textbf{Observed pilot count at \(K=50\)}
-            \begin{tightitemize}
-                \item Random / Gao: \(\taup=15\).
-                \item \TopN{}: \(\taup\approx7.79\).
-                \item \BRM{}: \(\taup\approx5.29\).
-                \item Mussbah: \(\taup\approx45.76\).
-            \end{tightitemize}
-        \end{column}
-    \end{columns}
+    \begin{minipage}{0.96\linewidth}
+        \scriptsize
+        \textbf{Pilot-overhead profile:} Random/Gao use the fixed design budget, Mussbah's chromatic number grows rapidly, and \BRM{} stays below the design budget.\\[-0.1em]
+        \textbf{At \(K=50\):} Random/Gao \(\taup=15\), \TopN{} \(\taup\approx7.79\), \BRM{} \(\taup\approx5.29\), Mussbah \(\taup\approx45.76\).
+    \end{minipage}
 \end{frame}
 
-\begin{frame}{Antenna Sweep: Robustness Across \(N\)}
+\begin{frame}{SE vs. AP Antennas}
     \small
-    \begin{columns}[T,onlytextwidth]
-        \begin{column}{0.49\textwidth}
-            \centering
-            \includegraphics[width=\linewidth,height=0.55\textheight,keepaspectratio]{presentation_n_sweep_6method/n_sweep_avg_se_vs_n.png}
-        \end{column}
-        \begin{column}{0.49\textwidth}
-            \centering
-            \includegraphics[width=\linewidth,height=0.55\textheight,keepaspectratio]{presentation_n_sweep_6method/n_sweep_avg_ee_vs_n.png}
-        \end{column}
-    \end{columns}
+    \vspace{-0.45em}
+    \begin{center}
+        \includegraphics[width=0.96\linewidth]{presentation_n_sweep_6method/n_sweep_avg_se_vs_n.png}
+    \end{center}
+    \vspace{-0.75em}
 
-    \vspace{0.25em}
-    \begin{columns}[T,onlytextwidth]
-        \begin{column}{0.47\textwidth}
-            \scriptsize
-            \textbf{Evaluation configuration:} \(L=200\), \(K=50\), \(N=1,\ldots,8\), \(\tauc=150\), \(\taudesign=15\), 200 setups.
-        \end{column}
-        \begin{column}{0.49\textwidth}
-            \scriptsize
-            \textbf{Observed trend}
-            \begin{tightitemize}
-                \item \BRM{} attains the highest mean SE across all tested \(N\).
-                \item At \(N=8\): \(+6.57\%\) mean SE, \(+12.01\%\) EE proxy.
-                \item \TopN{} provides a simpler AP-domain alternative with consistent positive gain.
-            \end{tightitemize}
-        \end{column}
-    \end{columns}
+    \begin{minipage}{0.96\linewidth}
+        \scriptsize
+        \textbf{Configuration:} \(L=200\), \(K=50\), \(N=1,\ldots,8\), \(\tauc=150\), \(\taudesign=15\), 200 setups.\\[-0.1em]
+        \textbf{Observed trend:} \BRM{} attains the highest mean SE across the tested antenna range; at \(N=8\), the gain is \(+6.57\%\).
+    \end{minipage}
+\end{frame}
+
+\begin{frame}{EE Proxy vs. AP Antennas}
+    \small
+    \vspace{-0.45em}
+    \begin{center}
+        \includegraphics[width=0.96\linewidth]{presentation_n_sweep_6method/n_sweep_avg_ee_vs_n.png}
+    \end{center}
+    \vspace{-0.75em}
+
+    \begin{minipage}{0.96\linewidth}
+        \scriptsize
+        \textbf{Configuration:} \(L=200\), \(K=50\), \(N=1,\ldots,8\), \(\tauc=150\), \(\taudesign=15\), 200 setups.\\[-0.1em]
+        \textbf{Observed trend:} \BRM{} leads the EE proxy across the tested antenna range; at \(N=8\), the gain is \(+12.01\%\).
+    \end{minipage}
 \end{frame}
 
 % ----------------------------------------------------------------
