@@ -8,7 +8,7 @@
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta, positioning, shapes.geometric, calc}
 
-\graphicspath{{../figures/}}
+\graphicspath{{../figures/}{.}}
 
 \title{Beam Resource Matching for Pilot Assignment}
 \subtitle{Combining Beam-Domain Conflict Modeling with Many-to-Many Matching}
@@ -35,9 +35,9 @@
     \end{itemize}
 }
 
-\newcommand{\smallnote}[1]{%
-    \vspace{0.25em}
-    {\scriptsize\color{gray!75}#1}
+\newcommand{\callout}[1]{%
+    \vspace{0.3em}
+    {\footnotesize\itshape\textbf{Note.}~#1}
 }
 
 \begin{document}
@@ -55,54 +55,27 @@
 \section{Introduction}
 
 \begin{frame}{Cell-Free Massive MIMO}
+    \footerref{Gao \emph{et al.}, IEEE TVT 73(1):1453--1467, 2024; Mussbah \emph{et al.}, IEEE Commun.\ Lett.\ 28(9):2176--2180, 2024.}
     \footnotesize
     \begin{columns}[T,onlytextwidth]
-        \begin{column}{0.52\textwidth}
+        \begin{column}{0.50\textwidth}
             \textbf{System characteristic}
             \begin{tightitemize}
                 \item Many distributed APs jointly serve a smaller number of UEs (\(L\gg K\)), coordinated by a central processing unit (CPU) over fronthaul.
                 \item No cell boundaries; coherent cooperative transmission yields handover-free coverage.
             \end{tightitemize}
 
-            \vspace{0.3em}
+            \vspace{0.5em}
             \textbf{Why it is studied}
             \begin{tightitemize}
                 \item Candidate enabler for 5G / next-generation networks.
                 \item Smaller SINR variation than cellular massive MIMO.
                 \item Improved interference management through AP cooperation.
             \end{tightitemize}
-
-            \vspace{0.2em}
-            \smallnote{References: Gao \emph{et al.} (IEEE TVT 2024); Mussbah \emph{et al.} (IEEE CL 2024).}
         \end{column}
-        \begin{column}{0.44\textwidth}
+        \begin{column}{0.48\textwidth}
             \centering
-            \begin{tikzpicture}[
-                    ap/.style={draw, circle, fill=blue!20, minimum size=0.42cm, inner sep=0pt, font=\tiny},
-                    ue/.style={draw, circle, fill=orange!30, minimum size=0.42cm, inner sep=0pt, font=\tiny},
-                    cpu/.style={draw, rounded corners, fill=gray!15, minimum width=1.5cm, minimum height=0.5cm, font=\scriptsize},
-                    bh/.style={dashed, draw=gray!55, thin}
-                ]
-                \node[cpu] (cpu) at (0, 2.1) {CPU};
-                \node[ap] (a1) at (-2.0, 0.7) {AP};
-                \node[ap] (a2) at (-0.7, 1.1) {AP};
-                \node[ap] (a3) at (0.7, 1.1) {AP};
-                \node[ap] (a4) at (2.0, 0.7) {AP};
-                \node[ap] (a5) at (-1.3, -0.7) {AP};
-                \node[ap] (a6) at (1.3, -0.7) {AP};
-                \node[ue] (u1) at (-0.7, 0.05) {UE};
-                \node[ue] (u2) at (0.7, 0.05) {UE};
-                \node[ue] (u3) at (0, -1.1) {UE};
-                \foreach \a in {a1,a2,a3,a4,a5,a6} \draw[bh] (\a) -- (cpu);
-                \draw[->, thick, blue!65] (a2) -- (u1);
-                \draw[->, thick, blue!65] (a5) -- (u1);
-                \draw[->, thick, blue!65] (a3) -- (u2);
-                \draw[->, thick, blue!65] (a4) -- (u2);
-                \draw[->, thick, blue!65] (a5) -- (u3);
-                \draw[->, thick, blue!65] (a6) -- (u3);
-            \end{tikzpicture}
-
-            {\scriptsize Distributed APs \(\to\) CPU; multiple APs cooperatively serve each UE.}
+            \includegraphics[width=\linewidth,height=0.72\textheight,keepaspectratio]{CF_system.png}
         \end{column}
     \end{columns}
 \end{frame}
@@ -152,7 +125,7 @@
             \end{tightitemize}
 
             \vspace{0.3em}
-            \smallnote{Limitation: AP-level matching does not resolve beam direction within a shared AP.}
+            \callout{Limitation: AP-level matching does not resolve beam direction within a shared AP.}
         \end{column}
         \begin{column}{0.48\textwidth}
             \textbf{Mussbah (IEEE CL 2024): Beam-domain graph}
@@ -163,7 +136,7 @@
             \end{tightitemize}
 
             \vspace{0.3em}
-            \smallnote{Limitation: dense beam-overlap graphs inflate the chromatic number and pilot overhead.}
+            \callout{Limitation: dense beam-overlap graphs inflate the chromatic number and pilot overhead.}
         \end{column}
     \end{columns}
 
@@ -250,6 +223,7 @@
 \section{Reference Methods}
 
 \begin{frame}{Mussbah Beam-Domain Method}
+    \footerref{Mussbah \emph{et al.}, ``Beam-Domain-Based Pilot Assignment for Energy Efficient Cell-Free Massive MIMO,'' IEEE Commun.\ Lett.\ 28(9), 2024.}
     \small
     \begin{columns}[T,onlytextwidth]
         \begin{column}{0.49\textwidth}
@@ -290,7 +264,7 @@
     \end{columns}
 
     \vspace{0.4em}
-    \smallnote{Beam-domain conflicts capture finer interference than AP-domain. Trade-off: dense graphs raise the chromatic number and inflate pilot overhead.}
+    \callout{Beam-domain conflicts capture finer interference than AP-domain. Trade-off: dense graphs raise the chromatic number and inflate pilot overhead.}
 \end{frame}
 
 \begin{frame}{Beam Weighted Threshold}
@@ -331,6 +305,7 @@
 \end{frame}
 
 \begin{frame}{Gao AP-Domain Matching}
+    \footerref{Gao \emph{et al.}, ``A Matching-Based Pilot Assignment Algorithm for Cell-Free Massive MIMO Networks,'' IEEE Trans.\ Veh.\ Technol.\ 73(1), 2024.}
     \small
     \begin{columns}[T,onlytextwidth]
         \begin{column}{0.50\textwidth}
@@ -374,7 +349,7 @@
     \end{columns}
 
     \vspace{0.3em}
-    \smallnote{Limitation: AP-level matching cannot distinguish two UEs that share an AP through different beams.}
+    \callout{Limitation: AP-level matching cannot distinguish two UEs that share an AP through different beams.}
 \end{frame}
 
 \begin{frame}{AP-Top-\(N\) Method}
@@ -535,7 +510,7 @@
     \end{columns}
 
     \vspace{0.35em}
-    \smallnote{Matching follows a deferred-acceptance protocol: UEs propose to their strongest resources, and each resource accepts up to \(Q_{\mathrm{res}}\) UEs ranked by beam power.}
+    \callout{Matching follows a deferred-acceptance protocol: UEs propose to their strongest resources, and each resource accepts up to \(Q_{\mathrm{res}}\) UEs ranked by beam power.}
 \end{frame}
 
 \begin{frame}{Matching Result Defines Active Beams}
