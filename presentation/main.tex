@@ -66,11 +66,11 @@
             \end{tightitemize}
 
             \vspace{0.5em}
-            \textbf{Why it is studied}
+            \textbf{Why cell-free mMIMO}
             \begin{tightitemize}
-                \item Candidate enabler for 5G / next-generation networks.
-                \item Smaller SINR variation than cellular massive MIMO.
-                \item Improved interference management through AP cooperation.
+                \item Distributed APs shorten access distances and improve macro-diversity.
+                \item Cell-free cooperation reduces cell-edge effects and SINR disparity.
+                \item Dense AP--UE connectivity also creates many overlapping spatial links, making pilot reuse a central bottleneck.
             \end{tightitemize}
         \end{column}
         \begin{column}{0.48\textwidth}
@@ -86,11 +86,17 @@
         \begin{column}{0.50\textwidth}
             \textbf{Channel estimation via uplink pilots}
 
-            A TDD coherence block of length \(\tauc\) allocates \(\taup\) pilot symbols followed by \(\tauc-\taup\) data symbols. AP \(l\) observes
+            A TDD coherence block of length \(\tauc\) allocates \(\taup\) pilot symbols followed by \(\tauc-\taup\) data symbols. AP \(l\) receives
             \[
-                \mathbf{Y}_l = \sum_{k=1}^{K} \sqrt{\eta_k}\,\mathbf{h}_{k,l}\,\boldsymbol{\phi}_k + \mathbf{N}_l,
+                \mathbf{Y}_{\mathrm{p},l}
+                =
+                \sum_{k=1}^{K}
+                \sqrt{\taup\rho_{\mathrm{p}}}\,
+                \mathbf{h}_{k,l}\boldsymbol{\phi}_{p_k}^{H}
+                +
+                \mathbf{N}_{\mathrm{p},l},
             \]
-            and forms MMSE estimates \(\widehat{\mathbf{h}}_{k,l}\).
+            where \(p_k\) is the pilot index assigned to UE \(k\). Correlating with \(\boldsymbol{\phi}_{p_k}\) gives the observation used for MMSE channel estimation.
 
             \vspace{0.4em}
             \[
@@ -113,7 +119,7 @@
     \end{columns}
 \end{frame}
 
-\begin{frame}{Two Mitigation Angles, One Combined Direction}
+\begin{frame}{Prior Approaches and Gap}
     \small
     \begin{columns}[T,onlytextwidth]
         \begin{column}{0.48\textwidth}
@@ -223,7 +229,7 @@
 \section{Reference Methods}
 
 \begin{frame}{Mussbah Beam-Domain Method}
-    \footerref{Mussbah \emph{et al.}, ``Beam-Domain-Based Pilot Assignment for Energy Efficient Cell-Free Massive MIMO,'' IEEE Commun.\ Lett.\ 28(9), 2024.}
+    \footerref{Mussbah \emph{et al.}, IEEE Commun.\ Lett.\ 28(9):2176--2180, 2024.}
     \small
     \begin{columns}[T,onlytextwidth]
         \begin{column}{0.49\textwidth}
