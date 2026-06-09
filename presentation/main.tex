@@ -636,25 +636,24 @@
     \begin{columns}[T,onlytextwidth]
         \begin{column}{0.58\textwidth}
             \centering
-            \includegraphics[width=\linewidth,height=0.59\textheight,keepaspectratio]{presentation_6method/presentation_clean_load_crossover_se.png}
+            \includegraphics[width=\linewidth,height=0.68\textheight,keepaspectratio]{presentation_6method/presentation_clean_load_crossover_se.png}
         \end{column}
         \begin{column}{0.38\textwidth}
+            \footnotesize
             \textbf{Evaluation configuration}
             \begin{tightitemize}
-                \item \(L=200\), \(N=8\)
-                \item \(K=25,\ldots,50\)
-                \item \(\tauc=150\)
-                \item \(\taudesign=15\)
+                \item \(L=200,\ N=8,\ K=25{-}50\)
+                \item \(\tauc=150,\ \taudesign=15\)
                 \item 200 setups
             \end{tightitemize}
 
-            \vspace{0.35em}
+            \vspace{0.25em}
             \textbf{Observed performance at \(K=50\)}
             \begin{tightitemize}
-                \item \BRM{}: \(+6.66\%\) mean SE vs.\ Random.
-                \item \TopN{}: \(+5.35\%\) mean SE vs.\ Random.
+                \item \BRM{}: \(+6.66\%\) mean SE.
+                \item \TopN{}: \(+5.35\%\) mean SE.
                 \item Gao matches Random within noise.
-                \item Mussbah underperforms due to inflated pilot count.
+                \item Mussbah loses from inflated \(\taup\).
             \end{tightitemize}
         \end{column}
     \end{columns}
@@ -665,7 +664,7 @@
     \begin{columns}[T,onlytextwidth]
         \begin{column}{0.58\textwidth}
             \centering
-            \includegraphics[width=\linewidth,height=0.59\textheight,keepaspectratio]{presentation_6method/presentation_clean_pilot_count_vs_k.png}
+            \includegraphics[width=\linewidth,height=0.68\textheight,keepaspectratio]{presentation_6method/presentation_clean_pilot_count_vs_k.png}
         \end{column}
         \begin{column}{0.38\textwidth}
             \textbf{Pilot-overhead profile}
@@ -692,11 +691,11 @@
     \begin{columns}[T,onlytextwidth]
         \begin{column}{0.49\textwidth}
             \centering
-            \includegraphics[width=\linewidth,height=0.46\textheight,keepaspectratio]{presentation_n_sweep_6method/n_sweep_avg_se_vs_n.png}
+            \includegraphics[width=\linewidth,height=0.55\textheight,keepaspectratio]{presentation_n_sweep_6method/n_sweep_avg_se_vs_n.png}
         \end{column}
         \begin{column}{0.49\textwidth}
             \centering
-            \includegraphics[width=\linewidth,height=0.46\textheight,keepaspectratio]{presentation_n_sweep_6method/n_sweep_avg_ee_vs_n.png}
+            \includegraphics[width=\linewidth,height=0.55\textheight,keepaspectratio]{presentation_n_sweep_6method/n_sweep_avg_ee_vs_n.png}
         \end{column}
     \end{columns}
 
