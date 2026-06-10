@@ -185,18 +185,97 @@ UE별 strongest AP Top-N만 사용해서 conflict graph를 만든다.
 
 1. UE `k`에 대해 strongest AP set `T_k(N_top)`을 구한다.
 2. 두 UE의 Top-N AP set이 겹치면 conflict edge를 둔다.
-3. sparse graph를 coloring한다.
+3. sparse graph를 max-degree-first greedy coloring한다.
+4. 사용된 color 수가 `tau_p_actual`이 된다.
 
 왜 넣었나:
 
 - beam 정보 없이 AP-domain pruning만으로도 어느 정도 graph sparsification이 가능하다는 비교점이다.
 - 구현과 설명이 단순하다.
 - moderate load에서 좋은 결과가 나온다.
+- BRM보다 정보 요구량과 구현 복잡도가 낮다.
 
 주의:
 
 - `N_top=8`은 제출본 세팅이다.
 - 최적 `N_top`이라고 주장하지 않는다.
+- `N_top`이 adaptive한 것이 아니라, `tau_p_actual`이 coloring 결과로 adaptive하게 나온다.
+- 구현상 serving/active AP mask는 AP-domain baseline과 같은 convention을 쓰고, Top-N graph는 pilot conflict graph를 만드는 데 사용한다.
+
+### 5.3.1 AP-Top-N 발표자용 집중 정리
+
+네가 AP-Top-N 질문을 답할 때 가장 먼저 잡아야 하는 포인트는 이거다.
+
+> AP-Top-N은 beam 정보 없이 AP-domain large-scale fading만으로 conflict graph를 sparse하게 만드는 방법입니다. 모든 AP overlap을 conflict로 보지 않고, UE별 strongest AP Top-N이 겹치는 경우만 중요한 pilot conflict로 봅니다.
+
+알고리즘을 말로 풀면:
+
+1. 각 UE `k`에 대해 large-scale fading `beta_{k,l}`이 큰 AP를 `N_top`개 고른다.
+2. 두 UE의 Top-N AP set이 하나라도 겹치면 둘 사이에 conflict edge를 둔다.
+3. 이 sparse conflict graph를 greedy coloring한다.
+4. 같은 conflict edge로 연결된 UE들은 서로 다른 pilot을 받는다.
+5. greedy coloring에서 실제로 사용된 color 수가 `tau_p_actual`이 된다.
+
+수식으로는 슬라이드 그대로:
+
+```text
+T_k(N_top) = Top_Ntop { beta_{k,1}, ..., beta_{k,L} }
+A_ij = 1{ T_i(N_top) cap T_j(N_top) != empty }
+```
+
+구현 기준:
+
+- 제출본 method label: `AP-Top-N (N=8)`
+- 내부 scheme 이름: `H3TopAPAdaptive`
+- 사용 정보: `stats.beta_large_scale`
+- Top-N conflict graph: `topn_overlap_conflict(...)`
+- coloring: `quota_free_greedy_color(...)`
+- `tau_p_actual = number of used colors`
+
+Gao와의 차이:
+
+- Gao는 UE와 AP를 many-to-many matching하고 AP group risk를 계산한다.
+- AP-Top-N은 matching을 하지 않는다.
+- AP-Top-N은 "강한 AP가 겹치는가?"만 보고 sparse graph를 만든다.
+- 그래서 Gao보다 단순하고, AP-domain pruning 효과가 직접적으로 나타난다.
+
+Mussbah/BRM과의 차이:
+
+- Mussbah/BRM은 beam-domain 정보를 사용한다.
+- AP-Top-N은 beam-domain 정보가 없어도 된다.
+- 따라서 AP-Top-N은 rich한 beam-level method라기보다, low-information practical method다.
+
+왜 성능이 나왔는가:
+
+- 모든 AP overlap을 conflict로 보면 graph가 불필요하게 dense해진다.
+- 특히 weak AP overlap까지 conflict로 보면 pilot reuse가 지나치게 보수적이 된다.
+- Top-N은 dominant AP overlap만 남겨 graph를 sparse하게 만든다.
+- 그 결과 moderate load에서 `tau_p_actual`이 줄고 prelog 이득이 생긴다.
+- 동시에 strongest AP overlap은 유지하므로 SINR-side 손실이 너무 커지지 않았다.
+
+제출본에서 네가 외워둘 숫자:
+
+| Setting | AP-Top-N result |
+| --- | --- |
+| Main K-sweep, `K=50` | mean SE `+5.35%` vs Random, P5 `+6.32%`, EE `+5.29%`, mean `tau_p_actual=7.79` |
+| N-sweep, `N=8`, `K=50` | mean SE `+5.25%`, P5 `+5.13%`, EE `+5.19%`, mean `tau_p_actual=7.86` |
+| High-K, `K=50` | mean SE `+5.28%`, mean `tau_p_actual=7.85` |
+| High-K, `K=100` | mean SE `+1.81%`, mean `tau_p_actual=12.52` |
+| High-K, `K=150` | mean SE `-1.50%`, mean `tau_p_actual=17.04` |
+
+해석:
+
+- AP-Top-N은 moderate load에서는 굉장히 설득력 있다.
+- 하지만 high load에서 `tau_p_actual`이 design budget 15를 넘기 시작하면 성능이 Random 아래로 내려간다.
+- 따라서 "AP-Top-N이 항상 좋다"가 아니라, "단순한 AP-domain sparsification만으로도 moderate load에서는 큰 이득이 가능하지만, high load에서는 pilot-count control이 더 필요하다"가 안전한 결론이다.
+
+발표장에서 한 문장으로:
+
+> AP-Top-N은 beam 정보 없이 strongest AP overlap만 conflict로 보는 sparse graph 방식입니다. 모든 AP overlap을 다 보지 않아서 pilot count를 줄일 수 있고, moderate load에서는 이 prelog 이득이 SINR 손실보다 커서 좋은 결과가 나왔습니다.
+
+두 문장 버전:
+
+> AP-Top-N은 Gao처럼 AP-domain 정보를 쓰지만, many-to-many matching까지 가지 않고 UE별 strongest AP Top-N이 겹치는지만 봅니다. 그래서 구현은 단순하지만 graph가 충분히 sparse해져서 K=50 기준 Random 대비 평균 SE가 약 5.35% 좋아졌고, actual pilot count도 약 7.79로 줄었습니다.
 
 ### 5.4 Beam Weighted Threshold
 
@@ -840,6 +919,54 @@ K=50:
 답:
 
 > 제출본에서는 simple AP-domain sparsification rule의 고정 세팅으로 `N_top=8`을 사용했습니다. 이 값이 전역 최적이라고 주장하는 것은 아닙니다. `N_top` sensitivity sweep은 future work로 보는 게 맞습니다.
+
+### Q17-1. "AP-Top-N에서 adaptive한 것은 N인가요, pilot count인가요?"
+
+답:
+
+> 제출본 AP-Top-N에서는 `N_top=8`을 고정했습니다. Adaptive한 것은 `N_top`이 아니라 graph coloring 결과로 나온 `tau_p_actual`입니다. 즉 Top-8 AP overlap graph를 만들고, 그 graph를 coloring했을 때 실제로 필요한 color 수를 pilot count로 사용합니다.
+
+### Q17-2. "왜 Top-N AP만 보나요? 약한 AP overlap도 interference가 될 수 있지 않나요?"
+
+답:
+
+> 약한 AP overlap도 완전히 0이라고 말할 수는 없습니다. 다만 모든 AP overlap을 conflict로 넣으면 graph가 너무 dense해져서 pilot 수가 커지고 prelog 손실이 커집니다. AP-Top-N은 dominant AP overlap만 conflict로 남겨서 중요한 충돌은 잡고, 약한 overlap 때문에 생기는 과도한 edge는 줄이자는 접근입니다.
+
+### Q17-3. "AP-Top-N은 Gao의 단순화인가요?"
+
+답:
+
+> AP-domain 정보를 쓴다는 점에서는 Gao와 같은 축에 있습니다. 하지만 Gao처럼 many-to-many matching을 하지는 않고, UE별 strongest AP Top-N set이 겹치는지만 봅니다. 그래서 Gao의 AP-overlap idea를 훨씬 단순하고 sparse한 conflict graph 방식으로 만든 것이라고 설명할 수 있습니다.
+
+### Q17-4. "AP-Top-N과 BRM 중 뭐가 더 좋은 방법인가요?"
+
+답:
+
+> 목적이 조금 다릅니다. AP-Top-N은 beam 정보 없이도 쓸 수 있는 단순하고 practical한 방법이고, BRM은 beam-domain resource competition까지 쓰는 더 rich한 방법입니다. 제출본 main setting에서는 BRM이 평균 SE와 EE가 더 좋지만, AP-Top-N도 K=50에서 평균 SE `+5.35%`로 매우 강합니다. 시스템이 beam 정보를 충분히 줄 수 있으면 BRM, 간단한 AP-domain rule이 필요하면 AP-Top-N이 더 매력적입니다.
+
+### Q17-5. "AP-Top-N이 high-K에서 무너지는 이유는 뭔가요?"
+
+답:
+
+> K가 커지면 Top-N set끼리 겹칠 확률이 올라가고 graph가 다시 dense해집니다. 그러면 coloring에 필요한 color 수, 즉 `tau_p_actual`이 커집니다. 실제로 high-K에서 K=150이면 AP-Top-N의 mean `tau_p_actual`이 약 17.04로 design budget 15를 넘고, 그때부터 Random보다 평균 SE가 낮아지기 시작합니다.
+
+### Q17-6. "AP-Top-N은 beam-domain을 안 쓰는데 왜 beam-domain 방법들과 비교하나요?"
+
+답:
+
+> 오히려 그래서 비교 가치가 있습니다. Beam-domain 정보 없이 AP-domain large-scale fading만으로 어느 정도까지 갈 수 있는지를 보여주는 기준점입니다. 결과적으로 moderate load에서는 AP-Top-N이 상당히 강해서, 복잡한 beam-domain 방법이 항상 필요한 것은 아니라는 현실적인 메시지도 줍니다.
+
+### Q17-7. "AP-Top-N에서 graph coloring은 exact coloring인가요?"
+
+답:
+
+> 구현은 max-degree-first greedy coloring입니다. 따라서 minimum chromatic number를 정확히 구했다고 주장하면 안 됩니다. 발표에서는 "greedy coloring 결과 필요한 pilot 수를 `tau_p_actual`로 사용했다"고 설명하는 것이 맞습니다.
+
+### Q17-8. "Top-N graph가 binary라서 overlap 개수가 많은 경우와 하나만 겹치는 경우를 구분 못 하지 않나요?"
+
+답:
+
+> 맞습니다. 제출본 AP-Top-N은 단순한 binary conflict graph입니다. overlap 개수나 strength를 더 세밀하게 반영하는 방향은 개선 가능성이 있습니다. 다만 binary로 단순화했는데도 moderate load에서 성능이 좋았기 때문에, 강한 AP overlap만 남기는 sparsification 자체가 효과가 있다는 점을 보여줍니다.
 
 ### Q18. "BWT threshold 10은 어떻게 정했나요?"
 
