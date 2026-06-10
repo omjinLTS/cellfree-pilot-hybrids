@@ -1,0 +1,478 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[margin=25mm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{hyperref}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.55em}
+
+\title{\textbf{Detailed Summary of the Beam Resource Matching Method}\\
+\large A Pilot Assignment Method Combining Mussbah's Beam-Domain Structure and Gao's Many-to-Many Matching at the AP-Beam Resource Level}
+\author{Cell-Free Massive MIMO Pilot Assignment}
+\date{}
+
+\newcommand{\tauactual}{\tau_{p}^{\mathrm{actual}}}
+\newcommand{\taudesign}{\tau_{p}^{\mathrm{design}}}
+\newcommand{\waa}{w_{\mathrm{aa}}}
+\newcommand{\wai}{w_{\mathrm{ai}}}
+\newcommand{\wia}{w_{\mathrm{ia}}}
+\newcommand{\TopN}{\mathrm{Top}}
+
+\begin{document}
+
+\maketitle
+
+This document removes the previous content related to MatchingBeamFixed and reorganizes the explanation around Mussbah, Gao, and Beam Resource Matching. In particular, the beam-domain common serving ratio used in Beam Resource Matching is defined as a weighted beam-overlap ratio, so that the weights \(\waa\), \(\wai\), and \(\wia\) are reflected directly in the risk score and the pilot reuse cost.
+
+\tableofcontents
+\newpage
+
+\section{Core Summary}
+
+Beam Resource Matching can be summarized in one sentence as follows.
+
+\begin{quote}
+Beam Resource Matching \(=\) Mussbah's beam-domain structure \(+\) Gao's many-to-many matching extended to the AP-beam resource level.
+\end{quote}
+
+In other words, Gao performs UE-AP matching, and Mussbah performs beam-domain active/moderate beam graph coloring. Beam Resource Matching combines these ideas by matching
+\[
+    \mathrm{UE} \leftrightarrow \text{AP-beam resource } r=(l,n),
+\]
+then redefining the active beams from the matching result and proceeding to pilot assignment.
+
+Here, an AP-beam resource means that one beam \(n\) of AP \(l\) is treated as one resource:
+\[
+    r=(l,n), \qquad |\mathcal{R}|=LN.
+\]
+
+\section{Mussbah Method}
+
+Mussbah views the multi-antenna AP channel after transforming it into the DFT beam domain:
+\[
+    \mathbf{h}_{k,l}^{(B)}=\mathbf{U}^{H}\mathbf{h}_{k,l}.
+\]
+
+Let \(\mathcal{B}_k\) denote the beam set reported by UE \(k\). Inside this set, beams are accumulated from the strongest power until a target ratio is satisfied, and those beams are selected as the active beams:
+\[
+    \mathcal{B}_{k}^{(a)} \subset \mathcal{B}_k.
+\]
+
+The remaining reported beams become moderate beams:
+\[
+    \mathcal{B}_{k}^{(i)}
+    =
+    \mathcal{B}_{k}\setminus \mathcal{B}_{k}^{(a)}.
+\]
+
+After that, an inter-UE interference graph is constructed from active/moderate beam overlaps:
+\[
+    \mathbf{B}
+    =
+    \mathbf{B}^{(a)T}\mathbf{B}^{(a)}
+    +
+    \mathbf{B}^{(a)T}\mathbf{B}^{(i)}
+    +
+    \mathbf{B}^{(i)T}\mathbf{B}^{(a)}.
+\]
+\[
+    A_{i,j}=1 \quad \text{if } B_{i,j}>0.
+\]
+
+That is, if two UEs share the same active beam, or if the active beam of one UE overlaps with the moderate beam of another UE, an edge is created because there is a risk of pilot contamination. Pilots are then assigned by graph coloring:
+\[
+    \tauactual=\chi(G).
+\]
+
+The advantage is that, because the method works in the beam domain, it can describe contamination more precisely than AP-domain methods. Since only active beams are turned on, EE can also improve through RF-chain on/off control. The disadvantage is that if the graph becomes dense, the number of required colors increases, which can increase pilot overhead.
+
+\section{Beam Weighted Threshold Method}
+
+Beam Weighted Threshold is the renamed version of the Mussbah-based beam-domain graph method that was implemented as Proposed in the code. Its basic structure is identical to Mussbah: it builds an inter-UE interference graph from active beam and moderate beam overlaps. However, when creating graph edges, it uses a weighted beam interference score rather than a simple overlap indicator.
+
+The weighted beam interference sum between two UEs \(u\) and \(v\) is defined as
+\[
+    B_{u,v}^{w}
+    =
+    \waa\left|\mathcal{B}_{u}^{(a)}\cap\mathcal{B}_{v}^{(a)}\right|
+    +
+    \wai\left|\mathcal{B}_{u}^{(a)}\cap\mathcal{B}_{v}^{(i)}\right|
+    +
+    \wia\left|\mathcal{B}_{u}^{(i)}\cap\mathcal{B}_{v}^{(a)}\right|.
+\]
+
+In matrix form, this is written as
+\[
+    \mathbf{B}^{w}
+    =
+    \waa\mathbf{B}^{(a)T}\mathbf{B}^{(a)}
+    +
+    \wai\mathbf{B}^{(a)T}\mathbf{B}^{(i)}
+    +
+    \wia\mathbf{B}^{(i)T}\mathbf{B}^{(a)}.
+\]
+
+The adjacency matrix creates an edge only when \(B_{u,v}^{w}\) exceeds the threshold \(\theta\):
+\[
+    A_{u,v}
+    =
+    \begin{cases}
+        1, & B_{u,v}^{w}>\theta,\ u\neq v,\\
+        0, & \text{otherwise.}
+    \end{cases}
+\]
+
+Thus, Beam Weighted Threshold does not create an edge for every active/moderate beam overlap. Instead, it creates an edge only when the beam-domain interference score between users, weighted by \(\waa\), \(\wai\), and \(\wia\), is sufficiently large. Graph coloring is then performed on the generated graph in the same way as Mussbah:
+\[
+    \tauactual=\chi(G_{\theta}).
+\]
+
+Therefore, Beam Weighted Threshold preserves the beam-domain graph coloring structure of Mussbah while removing weak overlap edges by thresholding, thereby controlling graph density and pilot overhead.
+
+\section{Gao Method}
+
+Gao performs many-to-many matching between UEs and APs based on AP-domain large-scale fading \(\beta_{m,k}\), not on beams:
+\[
+    \mu(m,k)=1.
+\]
+
+This means that UE \(m\) is matched to AP \(k\). The constraints are
+\[
+    |\mu(\mathrm{UE}_m)|\le Q_{\mathrm{UE}},
+    \qquad
+    |\mu(\mathrm{AP}_k)|\le Q_{\mathrm{AP}}.
+\]
+
+The important setting is
+\[
+    Q_{\mathrm{AP}}=\tau_p,
+\]
+so that the number of UEs inside one AP group does not exceed the number of pilots.
+
+The AP group is
+\[
+    \mathcal{G}_k=\{m:\mu(m,k)=1\}.
+\]
+
+The common serving AP ratio is then computed to measure how many serving APs a UE pair shares:
+\[
+    M_{m_1,m_2}^{\mathrm{AP}}
+    =
+    \frac{|\mu(m_1,:)\cap\mu(m_2,:)|}{|\mu(m_1,:)|}.
+\]
+
+The group risk is then computed as
+\[
+    S_k
+    =
+    \sum_{m_1\neq m_2,\ m_1,m_2\in\mathcal{G}_k}
+    M_{m_1,m_2}^{\mathrm{AP}}.
+\]
+
+The method processes risky AP groups first and assigns different pilots to UEs inside each group. However, because Gao works at the AP level, it cannot use beam-domain information. Therefore, even when two UEs are attached to the same AP, it cannot distinguish the case where their actual beam directions are different and the interference may be small.
+
+\section{AP-Top-N Method}
+
+In the flow of the PDF, AP-Top-\(N\) is a sparse conflict graph method that makes Gao's AP-domain idea lighter. Gao performs many-to-many matching between UEs and APs and computes pilot collision risk inside the same AP group. In contrast, AP-Top-\(N\) does not perform matching; it only keeps a few APs that appear strongest to each UE:
+\[
+    \mathcal{T}_k(N_{\mathrm{top}})
+    =
+    \Top_{N_{\mathrm{top}}}\{\beta_{k,1},\ldots,\beta_{k,L}\}.
+\]
+
+Here, \(\beta_{k,l}\) is the large-scale fading between UE \(k\) and AP \(l\). In other words, from the perspective of UE \(k\), only the \(N\) APs with the largest channel gains are selected.
+
+Then, if two UEs \(i\) and \(j\) share the same strong AP, a conflict edge is created:
+\[
+    e_{i,j}^{\mathrm{TopN}}
+    =
+    \mathbf{1}\{
+    \mathcal{T}_i(N_{\mathrm{top}})
+    \cap
+    \mathcal{T}_j(N_{\mathrm{top}})
+    \neq \varnothing
+    \}.
+\]
+
+That is, if the strongest AP sets of two UEs overlap, the method regards pilot contamination risk as high and assigns different pilots. If their strongest AP sets do not overlap, it regards pilot reuse as relatively safe.
+
+Therefore, the pilot assignment flow of AP-Top-\(N\) is as follows.
+
+\begin{enumerate}
+    \item Select the Top-\(N\) AP set for each UE based on \(\beta_{k,l}\).
+    \item Create conflict edges for UE pairs whose Top-\(N\) AP sets overlap.
+    \item Perform graph coloring on the resulting sparse graph.
+    \item UEs connected by an edge use different pilots.
+\end{enumerate}
+
+The methods in the PDF can be summarized as follows.
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Method & Basis & Core idea\\
+\midrule
+Gao & AP-domain matching & Compute AP group risk after UE-AP matching\\
+Beam Weighted Threshold & beam-domain & Create edges only when weighted beam overlap exceeds a threshold\\
+Beam Resource Matching & AP-beam resource & Match UEs to AP-beam resources\\
+AP-Top-\(N\) & AP-domain sparsification & Treat only strong AP Top-\(N\) overlap as conflict\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+In one sentence, AP-Top-\(N\) uses AP-domain large-scale fading like Gao, but it does not use all AP overlaps or complex matching. Instead, it creates conflict edges only when the strongest AP Top-\(N\) sets of UEs overlap.
+
+The advantage is that the graph is prevented from becoming too dense. If every shared weak AP is treated as a conflict, the number of edges increases and the required number of pilots can also increase. AP-Top-\(N\) keeps only dominant AP overlaps that have large practical impact, thereby allowing more aggressive pilot reuse.
+
+\section{Core Idea of Beam Resource Matching}
+
+Beam Resource Matching changes the matching target of Gao from APs to AP-beam resources:
+\[
+    r=(l,n), \qquad |\mathcal{R}|=LN.
+\]
+
+That is, one beam \(n\) of AP \(l\) is treated as one resource. The preference between UE \(k\) and resource \(r\) is the beam power:
+\[
+    P_{k,r}=P_{k,l,n}.
+\]
+
+Thus, instead of Gao's \(\beta_{k,l}\), Beam Resource Matching uses the beam-domain power \(P_{k,l,n}\).
+
+The overall flow is
+\[
+    \text{reported beam}
+    \rightarrow
+    \text{reference active beam count}
+    \rightarrow
+    \text{UE-resource matching}
+    \rightarrow
+    \text{final active beam}
+    \rightarrow
+    \text{resource group}
+    \rightarrow
+    \text{pilot assignment}.
+\]
+
+First, reference active beams are generated using the Mussbah method. However, these are not the final active beams; they are used only as a reference for setting the UE quota:
+\[
+    Q_{k}^{\mathrm{UE}}=|\widetilde{\mathcal{A}}_k|.
+\]
+
+That is, UE \(k\) can be matched to as many AP-beam resources as the number of beams that Mussbah would originally have selected as active.
+
+The matching variable is
+\[
+    \mu_{k,r}\in\{0,1\}.
+\]
+\[
+    \mu_{k,r}=1
+\]
+means that UE \(k\) is matched to AP-beam resource \(r\). The constraints are
+\[
+    \sum_{r}\mu_{k,r}\le Q_{k}^{\mathrm{UE}},
+\]
+\[
+    \sum_{k}\mu_{k,r}\le Q_{\mathrm{res}},
+\]
+\[
+    \mu_{k,r}=0 \quad \text{if } r\notin\mathcal{B}_k.
+\]
+
+Here, \(Q_{\mathrm{res}}\) is the maximum number of UEs that one AP-beam resource can accept, and it is usually set to the design pilot count:
+\[
+    Q_{\mathrm{res}}=\taudesign.
+\]
+
+The matching process proceeds with a proposal mechanism similar to Gao. A UE first proposes to resources with large beam power, and each resource accepts up to \(Q_{\mathrm{res}}\) UEs with large beam power among the UEs that proposed to it.
+
+\section{The Matching Result Defines the Active Beams}
+
+This is the most important part. In Mussbah, active beams are determined by a power threshold, but in Beam Resource Matching, the matching result determines the active beams:
+\[
+    \mathcal{A}_k=\{r:\mu_{k,r}=1\}.
+\]
+
+Reported beams that are not matched become moderate beams:
+\[
+    \mathcal{I}_k=\mathcal{B}_k\setminus\mathcal{A}_k.
+\]
+
+Thus, an active beam is not simply ``a strong beam from the perspective of each UE.'' It becomes ``a beam that passed the global UE-resource matching competition.'' Therefore, situations where too many UEs concentrate on a particular AP-beam resource can be controlled by the matching quota.
+
+\section{Pilot Assignment Based on the Weighted Beam-Overlap Ratio}
+
+After matching, a UE group is formed for each resource:
+\[
+    \mathcal{G}_r=\{k:\mu_{k,r}=1\}.
+\]
+
+In Beam Resource Matching, Gao's AP group is therefore replaced by an AP-beam resource group.
+
+\subsection{Weighted Beam Overlap}
+
+In Beam Resource Matching, the beam-domain overlap of a UE pair is defined not as a simple count, but as a weighted overlap multiplied by \(\waa\), \(\wai\), and \(\wia\):
+\[
+    W_{u,v}
+    =
+    \waa|\mathcal{A}_u\cap\mathcal{A}_v|
+    +
+    \wai|\mathcal{A}_u\cap\mathcal{I}_v|
+    +
+    \wia|\mathcal{I}_u\cap\mathcal{A}_v|.
+\]
+
+The meaning of each term is as follows.
+
+\begin{itemize}
+    \item \(\waa|\mathcal{A}_u\cap\mathcal{A}_v|\): the two UEs share the same active AP-beam resource. This is generally the most dangerous case, so \(\waa\) can be set large.
+    \item \(\wai|\mathcal{A}_u\cap\mathcal{I}_v|\): a beam that is active for UE \(u\) is moderate for UE \(v\).
+    \item \(\wia|\mathcal{I}_u\cap\mathcal{A}_v|\): a beam that is moderate for UE \(u\) is active for UE \(v\).
+\end{itemize}
+
+Therefore, \(\waa\), \(\wai\), and \(\wia\) are not merely values for creating diagnostic edges. They are weights directly reflected in the beam-domain overlap ratio, the resource group risk, and the pilot reuse cost.
+
+\subsection{Weighted Beam-Overlap Ratio}
+
+Gao's common serving AP ratio measured how much AP sharing exists. In Beam Resource Matching, this is replaced by a beam-domain weighted beam-overlap ratio:
+\[
+    M_{u,v}^{B}
+    =
+    \frac{W_{u,v}}{|\mathcal{A}_u|}
+    =
+    \frac{
+        \waa|\mathcal{A}_u\cap\mathcal{A}_v|
+        +
+        \wai|\mathcal{A}_u\cap\mathcal{I}_v|
+        +
+        \wia|\mathcal{I}_u\cap\mathcal{A}_v|
+    }{|\mathcal{A}_u|}.
+\]
+
+This equation is the key difference from the existing unweighted ratio. That is, the beam-domain overlap ratio of Beam Resource Matching is not a method that counts every overlap equally, as in
+\[
+    |\mathcal{A}_u\cap\mathcal{A}_v|
+    +
+    |\mathcal{A}_u\cap\mathcal{I}_v|
+    +
+    |\mathcal{I}_u\cap\mathcal{A}_v|.
+\]
+
+Instead, it is a weighted ratio that controls the importance of each overlap type using \(\waa\), \(\wai\), and \(\wia\).
+
+Also, this value is a directed ratio. In general,
+\[
+    M_{u,v}^{B}\neq M_{v,u}^{B}
+\]
+can hold, because the denominators can be \(|\mathcal{A}_u|\) and \(|\mathcal{A}_v|\), respectively.
+
+\subsection{Resource Group Risk}
+
+The resource group risk is computed using the weighted beam-overlap ratio:
+\[
+    S_r
+    =
+    \sum_{u\neq v,\ u,v\in\mathcal{G}_r}
+    M_{u,v}^{B}.
+\]
+
+Pilot assignment is performed starting from the group with large \(S_r\). Inside a group, pilots are assigned orthogonally while avoiding pilots that have already been used whenever possible. If there are no unused pilots left, the method selects the pilot with the smallest weighted beam-overlap cost with UEs already using the same pilot:
+\[
+    C(u,p)
+    =
+    \sum_{i:p_i=p}
+    \left(M_{u,i}^{B}+M_{i,u}^{B}\right).
+\]
+\[
+    p_u^{\star}=\arg\min_{p} C(u,p).
+\]
+
+Therefore, the actual pilot assignment in Beam Resource Matching follows the structure
+\[
+    (\waa,\wai,\wia)
+    \rightarrow
+    W_{u,v}
+    \rightarrow
+    M_{u,v}^{B}
+    \rightarrow
+    S_r,\ C(u,p)
+    \rightarrow
+    p_u^{\star}.
+\]
+
+\section{Adaptive Pilot Count}
+
+Beam Resource Matching uses only as many pilots as the size of the largest resource group:
+\[
+    \tau_{p}^{\mathrm{BRM}}=\max_{r}|\mathcal{G}_r|.
+\]
+
+Since the matching stage already satisfies
+\[
+    |\mathcal{G}_r|\le Q_{\mathrm{res}}=\taudesign,
+\]
+it follows that
+\[
+    \tau_{p}^{\mathrm{BRM}}\le \taudesign.
+\]
+
+This is the major difference from Mussbah's adaptive method. In Mussbah, \(\tau_p\) can grow when the graph coloring result becomes dense. In Beam Resource Matching, the number of adaptive pilots has an upper bound because of the resource quota.
+
+\section{Why Performance Can Improve}
+
+There are three core reasons.
+
+\subsection*{First, the beam domain is more accurate than the AP domain}
+
+Even if two UEs share the same AP, the actual contamination can be small when their beams are different:
+\[
+    \text{same AP} \neq \text{same beam}.
+\]
+
+\subsection*{Second, active beams are determined by matching}
+
+Rather than each UE simply selecting beams that are strong from its own perspective, the quota controls situations where many UEs concentrate on the same AP-beam resource.
+
+\subsection*{Third, the weighted beam-overlap ratio reflects conflict severity}
+
+Beam Resource Matching does not treat all beam overlaps equally. It computes
+\[
+    M_{u,v}^{B}
+    =
+    \frac{
+        \waa|\mathcal{A}_u\cap\mathcal{A}_v|
+        +
+        \wai|\mathcal{A}_u\cap\mathcal{I}_v|
+        +
+        \wia|\mathcal{I}_u\cap\mathcal{A}_v|
+    }{|\mathcal{A}_u|}.
+\]
+
+Therefore, larger weights can be assigned to more dangerous relationships such as active-active overlap, and important conflicts can be separated first during pilot assignment.
+
+\subsection*{Fourth, only the required number of pilots is used}
+
+The SE expression includes a prelog factor:
+\[
+    \mathrm{SE}_k
+    =
+    \frac{\tau_c-\tau_p}{\tau_c}
+    \log_2(1+\mathrm{SINR}_k).
+\]
+
+Therefore, if \(\tau_p\) decreases, SE increases for the same SINR. At the same time, if the number of active beams decreases, total power can be reduced through RF-chain on/off effects, and EE can also improve.
+
+In summary, Beam Resource Matching is a method that ``looks at beams like Mussbah and performs matching like Gao, but performs the matching at the AP-beam resource level rather than the AP level.'' Thus, it reflects beam-domain contamination more accurately while reducing pilot overhead through
+\[
+    \tau_p=\max_{r}|\mathcal{G}_r|
+\]
+and also aims for RF-chain reduction based on active beams.
+
+\section{Final Summary}
+
+\begin{quote}
+Beam Resource Matching extends Gao's AP-domain many-to-many matching to Mussbah's beam-domain AP-beam resources. In pilot assignment, it also uses the weighted beam-overlap ratio \(M_{u,v}^{B}\), multiplied by \(\waa\), \(\wai\), and \(\wia\), to compute the resource group risk \(S_r\) and the pilot reuse cost \(C(u,p)\). Therefore, the method separates important beam-domain collisions first while reducing pilot overhead through \(\tau_p=\max_r|\mathcal{G}_r|\).
+\end{quote}
+
+\end{document}

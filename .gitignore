@@ -43,6 +43,7 @@ figures/presentation_load_crossover_6method_*_ee.png
 *.pdf
 # ...except the presentation deck PDF (final deliverable)
 !presentation/*.pdf
+!Beamer/*.pdf
 
 # LaTeX compile artifacts
 *.aux
